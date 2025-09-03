@@ -4,7 +4,7 @@ project(bench_gemm LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3" CACHE PATH "Eigen3 include dir")
+find_package(Eigen3 3.4 REQUIRED NO_MODULE)
 
 #option(AUTOALG_ENABLE_AVX2 "Build AVX2 backend (with runtime fallback)" ON)
 
