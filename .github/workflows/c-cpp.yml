@@ -1,0 +1,36 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Install Eigen
+        run: |
+          sudo apt-get update 
+          sudo apt-get install -y libeigen3-dev libgflags-dev libgtest-dev libgoogle-glog-dev
+
+      - name: Configure (CMake)
+        run: |
+          mkdir -p build
+          cd build
+          cmake ..
+
+      - name: Build (make -j)
+        run: |
+          cd build
+          make -j"$(nproc)"
