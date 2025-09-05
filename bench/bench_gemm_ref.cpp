@@ -6,12 +6,12 @@
 #include <string>
 #include <vector>
 
-#include "matrix_multiply.hpp"
+#include "backend_ref.hpp"
 
 using Clock = std::chrono::high_resolution_clock;
 
 struct Args {
-  int M = 512, N = 1024, K = 256;
+  int M = 512, N = 1024, K = 64;
   int iters = 10;
   int warmup = 2;
   int threads = 1;
@@ -61,8 +61,7 @@ static Args ParseArgs(const int argc, char** argv) {
       ParseFloat(argv[++i], a.check_eps);
     } else if (k == "-h" || k == "--help") {
       std::cout << "Usage: bench_gemm [--m M] [--n N] [--k K] [--iters R] "
-                   "[--warmup W]\n"
-                   "                  [--threads T] [--seed S] [--eps E]\n";
+                   "[--warmup W] [--threads T] [--seed S] [--eps E]\n";
       std::exit(0);
     }
   }
@@ -76,8 +75,6 @@ static double Gflops(const int M, const int N, const int K, const double ms) {
 }
 
 int main(int argc, char** argv) {
-  auto time = Clock::now();
-  std::cout << time.time_since_epoch().count() << std::endl;
   Args args = ParseArgs(argc, argv);
 
   const int M = args.M, N = args.N, K = args.K;

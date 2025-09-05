@@ -1,2 +1,24 @@
-# GEneral-Matrix-Matrix-Multiply
-GEneral Matrix–Matrix Multiply
+# 矩阵乘法
+
+本仓库用 **C++** 从零实现多种 GEMM（General Matrix–Matrix Multiply）算法，并在可控且公平的环境里与主流开源库对比。  
+
+目标不是“为了超越而超越”，而是学习优先：一步步解释为什么快/为什么慢，用真实的基准数据与可读代码帮助你理解优化背后的原理与取舍。
+
+---
+
+## 依赖
+
+- GCC 9.4.0 
+
+---
+
+## 构建与运行
+
+### 快速开始
+```bash
+mkdir build
+cd build
+make -j
+```
+
+## 更多细节在 docs
