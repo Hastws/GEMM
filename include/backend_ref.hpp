@@ -3,7 +3,7 @@
 
 #include "macro.hpp"
 
-namespace autoalg {
+namespace Auaoalg {
 
 static AA_ALWAYS_INLINE void BlockKernel64(const float* AA_RESTRICT a_row,
                                            const float* AA_RESTRICT B,
@@ -251,5 +251,5 @@ static AA_ALWAYS_INLINE void MatrixMultiplyNaive(const float* A, const float* B,
   }
 }
 
-}  // namespace autoalg
+}  // namespace Auaoalg
 #endif

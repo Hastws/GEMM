@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
   EC.noalias() = EA * EB;
 
   std::fill(C_user.begin(), C_user.end(), 0.f);
-  autoalg::MatrixMultiply(A.data(), B.data(), C_user.data(), M, N, K);
+  Auaoalg::MatrixMultiply(A.data(), B.data(), C_user.data(), M, N, K);
 
   float max_abs = 0.f, max_rel = 0.f;
   const float tiny = 1e-12f;
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
     EC.setZero();
     EC.noalias() = EA * EB;
     std::fill(C_user.begin(), C_user.end(), 0.f);
-    autoalg::MatrixMultiply(A.data(), B.data(), C_user.data(), M, N, K);
+    Auaoalg::MatrixMultiply(A.data(), B.data(), C_user.data(), M, N, K);
   }
 
   double best_eigen_ms = 1e100;
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
   for (int r = 0; r < args.iters; ++r) {
     std::fill(C_user.begin(), C_user.end(), 0.f);
     auto t0 = Clock::now();
-    autoalg::MatrixMultiply(A.data(), B.data(), C_user.data(), M, N, K);
+    Auaoalg::MatrixMultiply(A.data(), B.data(), C_user.data(), M, N, K);
     auto t1 = Clock::now();
     double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
     if (ms < best_user_ms) best_user_ms = ms;

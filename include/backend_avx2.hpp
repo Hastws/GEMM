@@ -10,7 +10,7 @@
 #error "AVX2 not enabled: compile with -mavx2 -mfma"
 #endif
 
-namespace autoalg {
+namespace Auaoalg {
 // Row-major: A[M×K], B[K×N], C[M×N]
 // Overwrite: C = A * B
 
@@ -286,5 +286,5 @@ static AA_ALWAYS_INLINE void MatrixMultiply(const float* AA_RESTRICT A,
   }
 }
 
-}  // namespace autoalg
+}  // namespace Auaoalg
 #endif
