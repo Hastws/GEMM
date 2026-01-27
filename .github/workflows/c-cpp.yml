@@ -59,6 +59,14 @@ jobs:
         run: |
           OMP_NUM_THREADS=2 ./build/bench_avx2_openmp --m 256 --n 256 --k 256 --iters 3
 
+      - name: Run AVX2+OpenMP+Blocked benchmark
+        run: |
+          OMP_NUM_THREADS=2 ./build/bench_avx2_openmp_blocked --m 256 --n 256 --k 256 --iters 3
+
+      - name: Run Strassen benchmark
+        run: |
+          ./build/bench_strassen --m 256 --n 256 --k 256 --iters 2
+
   build-cuda:
     name: Build (CUDA)
     runs-on: ubuntu-latest
@@ -81,13 +89,14 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake -DCMAKE_CUDA_COMPILER=$(which nvcc) ..
+          cmake -DCMAKE_CUDA_COMPILER=$(which nvcc) \
+                -DCUBLAS_LIBRARY=/usr/local/cuda/lib64/libcublas.so ..
 
       - name: Build all targets (including CUDA)
         run: |
           cd build
           make -j"$(nproc)"
 
-      - name: Verify CUDA binary built
+      - name: Verify CUDA binaries built
         run: |
-          ls -la build/bench_cuda || echo "CUDA binary not built (expected on non-GPU runners)"
+          ls -la build/bench_cuda* build/bench_cublas || echo "Some CUDA binaries not built"
