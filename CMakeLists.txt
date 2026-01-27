@@ -54,3 +54,124 @@ else ()
         )
     endif ()
 endif ()
+
+# ============ NEON Backend (ARM) ============
+add_executable(bench_neon bench/bench_gemm_neon.cpp)
+
+target_compile_definitions(bench_neon PRIVATE
+        EIGEN_NO_DEBUG
+        EIGEN_DONT_PARALLELIZE
+)
+
+# 限定为 ARM/AArch64 平台时加 NEON 参数，其他平台给出提示但仍可编译（会走 REF 后端）
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64|arm64|armv7|armv8")
+    target_compile_options(bench_neon PRIVATE
+            -O3 -DNDEBUG
+            -ffast-math -fno-math-errno -fno-trapping-math
+    )
+    # AArch64 默认启用 NEON，无需额外标志；ARMv7 可能需要 -mfpu=neon
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
+        target_compile_options(bench_neon PRIVATE -mfpu=neon)
+    endif ()
+else ()
+    message(WARNING "bench_neon: Non-ARM platform detected; NEON flags not applied. The code should fall back to REF at compile-time/headers.")
+    target_compile_options(bench_neon PRIVATE
+            -O3 -DNDEBUG
+            -ffast-math -fno-math-errno -fno-trapping-math
+    )
+endif ()
+
+# ============ Blocked (Cache Tiling) Backend ============
+add_executable(bench_blocked bench/bench_gemm_blocked.cpp)
+
+target_compile_definitions(bench_blocked PRIVATE
+        EIGEN_NO_DEBUG
+        EIGEN_DONT_PARALLELIZE
+)
+
+target_compile_options(bench_blocked PRIVATE
+        -O3 -DNDEBUG
+        -ffast-math -fno-math-errno -fno-trapping-math
+)
+
+# ============ OpenMP Backend ============
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    add_executable(bench_openmp bench/bench_gemm_openmp.cpp)
+    
+    target_compile_definitions(bench_openmp PRIVATE
+            EIGEN_NO_DEBUG
+    )
+    
+    target_compile_options(bench_openmp PRIVATE
+            -O3 -DNDEBUG
+            -ffast-math -fno-math-errno -fno-trapping-math
+    )
+    
+    target_link_libraries(bench_openmp PRIVATE OpenMP::OpenMP_CXX)
+else()
+    message(WARNING "OpenMP not found, bench_openmp will not be built")
+endif()
+
+# ============ AVX2 + Blocked Backend ============
+add_executable(bench_avx2_blocked bench/bench_gemm_avx2_blocked.cpp)
+
+target_compile_definitions(bench_avx2_blocked PRIVATE
+        EIGEN_NO_DEBUG
+        EIGEN_DONT_PARALLELIZE
+)
+
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|x64|X86_64")
+    target_compile_options(bench_avx2_blocked PRIVATE
+            -O3 -DNDEBUG
+            -mavx2 -mfma
+            -ffast-math -fno-math-errno -fno-trapping-math
+    )
+else()
+    message(WARNING "bench_avx2_blocked: Non-x86_64 platform, AVX2 not available")
+endif()
+
+# ============ AVX2 + OpenMP Backend ============
+if(OpenMP_CXX_FOUND AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|x64|X86_64")
+    add_executable(bench_avx2_openmp bench/bench_gemm_avx2_openmp.cpp)
+    
+    target_compile_definitions(bench_avx2_openmp PRIVATE
+            EIGEN_NO_DEBUG
+    )
+    
+    target_compile_options(bench_avx2_openmp PRIVATE
+            -O3 -DNDEBUG
+            -mavx2 -mfma
+            -ffast-math -fno-math-errno -fno-trapping-math
+    )
+    
+    target_link_libraries(bench_avx2_openmp PRIVATE OpenMP::OpenMP_CXX)
+endif()
+
+# ============ CUDA Backend ============
+include(CheckLanguage)
+check_language(CUDA)
+
+if(CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+    
+    add_executable(bench_cuda bench/bench_gemm_cuda.cu)
+    
+    set_target_properties(bench_cuda PROPERTIES
+            CUDA_STANDARD 14
+            CUDA_STANDARD_REQUIRED ON
+    )
+    
+    target_compile_definitions(bench_cuda PRIVATE
+            EIGEN_NO_DEBUG
+            EIGEN_DONT_PARALLELIZE
+    )
+    
+    target_compile_options(bench_cuda PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:-O3 --use_fast_math>
+    )
+    
+    target_include_directories(bench_cuda PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+else()
+    message(WARNING "CUDA not found, bench_cuda will not be built")
+endif()
