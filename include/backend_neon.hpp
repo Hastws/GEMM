@@ -10,9 +10,15 @@
 
 #include <cstring>
 
+#include "macro.hpp"
+
+namespace Auaoalg {
+
 // 4 列向量化（AArch64/ARMv7 NEON；如需 FMA，可替换为 vfmaq_f32）
-static inline void MatrixMultiply(float* A, float* B, float* C, int M, int N,
-                                  int K) {
+static AA_ALWAYS_INLINE void MatrixMultiply(const float* AA_RESTRICT A,
+                                            const float* AA_RESTRICT B,
+                                            float* AA_RESTRICT C, int M, int N,
+                                            int K) {
   const int V = 4;
   const int N4 = (N / V) * V;
 
@@ -40,4 +46,7 @@ static inline void MatrixMultiply(float* A, float* B, float* C, int M, int N,
     }
   }
 }
+
+}  // namespace Auaoalg
+
 #endif

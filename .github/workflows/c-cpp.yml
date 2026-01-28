@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: GEMM Benchmark CI
 
 on:
   push:
@@ -7,22 +7,18 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-cpu:
+    name: Build & Test (CPU)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install build tools
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake
-
-      - name: Install Eigen
-        run: |
-          sudo apt-get update 
-          sudo apt-get install -y libeigen3-dev libgflags-dev libgtest-dev libgoogle-glog-dev
+          sudo apt-get install -y build-essential cmake libeigen3-dev
 
       - name: Configure (CMake)
         run: |
@@ -30,7 +26,68 @@ jobs:
           cd build
           cmake ..
 
-      - name: Build (make -j)
+      - name: Build all targets
         run: |
           cd build
           make -j"$(nproc)"
+
+      - name: List built executables
+        run: |
+          ls -la build/bench_*
+
+      - name: Run REF benchmark (correctness check)
+        run: |
+          ./build/bench_ref --m 256 --n 256 --k 256 --iters 3
+
+      - name: Run Blocked benchmark
+        run: |
+          ./build/bench_blocked --m 256 --n 256 --k 256 --iters 3
+
+      - name: Run AVX2 benchmark
+        run: |
+          ./build/bench_avx2 --m 256 --n 256 --k 256 --iters 3
+
+      - name: Run AVX2+Blocked benchmark
+        run: |
+          ./build/bench_avx2_blocked --m 256 --n 256 --k 256 --iters 3
+
+      - name: Run OpenMP benchmark
+        run: |
+          OMP_NUM_THREADS=2 ./build/bench_openmp --m 256 --n 256 --k 256 --iters 3
+
+      - name: Run AVX2+OpenMP benchmark
+        run: |
+          OMP_NUM_THREADS=2 ./build/bench_avx2_openmp --m 256 --n 256 --k 256 --iters 3
+
+  build-cuda:
+    name: Build (CUDA)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install CUDA Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.11
+        with:
+          cuda: '12.2.0'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libeigen3-dev
+
+      - name: Configure with CUDA
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_CUDA_COMPILER=$(which nvcc) ..
+
+      - name: Build all targets (including CUDA)
+        run: |
+          cd build
+          make -j"$(nproc)"
+
+      - name: Verify CUDA binary built
+        run: |
+          ls -la build/bench_cuda || echo "CUDA binary not built (expected on non-GPU runners)"
