@@ -172,6 +172,80 @@ if(CMAKE_CUDA_COMPILER)
     )
     
     target_include_directories(bench_cuda PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
+    # ============ cuBLAS Backend ============
+    find_library(CUBLAS_LIBRARY cublas HINTS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}/../lib64)
+    if(CUBLAS_LIBRARY)
+        add_executable(bench_cublas bench/bench_gemm_cublas.cu)
+        
+        set_target_properties(bench_cublas PROPERTIES
+                CUDA_STANDARD 14
+                CUDA_STANDARD_REQUIRED ON
+        )
+        
+        target_compile_definitions(bench_cublas PRIVATE
+                EIGEN_NO_DEBUG
+                EIGEN_DONT_PARALLELIZE
+        )
+        
+        target_compile_options(bench_cublas PRIVATE
+                $<$<COMPILE_LANGUAGE:CUDA>:-O3 --use_fast_math>
+        )
+        
+        target_include_directories(bench_cublas PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+        target_link_libraries(bench_cublas PRIVATE ${CUBLAS_LIBRARY})
+    else()
+        message(WARNING "cuBLAS not found, bench_cublas will not be built")
+    endif()
+
+    # ============ CUDA v2 (Optimized) Backend ============
+    add_executable(bench_cuda_v2 bench/bench_gemm_cuda_v2.cu)
+    
+    set_target_properties(bench_cuda_v2 PROPERTIES
+            CUDA_STANDARD 14
+            CUDA_STANDARD_REQUIRED ON
+    )
+    
+    target_compile_definitions(bench_cuda_v2 PRIVATE
+            EIGEN_NO_DEBUG
+            EIGEN_DONT_PARALLELIZE
+    )
+    
+    target_compile_options(bench_cuda_v2 PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:-O3 --use_fast_math>
+    )
+    
+    target_include_directories(bench_cuda_v2 PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 else()
-    message(WARNING "CUDA not found, bench_cuda will not be built")
+    message(WARNING "CUDA not found, bench_cuda/bench_cublas/bench_cuda_v2 will not be built")
 endif()
+
+# ============ AVX2 + OpenMP + Blocked Backend (Triple Optimization) ============
+if(OpenMP_CXX_FOUND AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|x64|X86_64")
+    add_executable(bench_avx2_openmp_blocked bench/bench_gemm_avx2_openmp_blocked.cpp)
+    
+    target_compile_definitions(bench_avx2_openmp_blocked PRIVATE
+            EIGEN_NO_DEBUG
+    )
+    
+    target_compile_options(bench_avx2_openmp_blocked PRIVATE
+            -O3 -DNDEBUG
+            -mavx2 -mfma
+            -ffast-math -fno-math-errno -fno-trapping-math
+    )
+    
+    target_link_libraries(bench_avx2_openmp_blocked PRIVATE OpenMP::OpenMP_CXX)
+endif()
+
+# ============ Strassen Algorithm Backend ============
+add_executable(bench_strassen bench/bench_gemm_strassen.cpp)
+
+target_compile_definitions(bench_strassen PRIVATE
+        EIGEN_NO_DEBUG
+        EIGEN_DONT_PARALLELIZE
+)
+
+target_compile_options(bench_strassen PRIVATE
+        -O3 -DNDEBUG
+        -ffast-math -fno-math-errno -fno-trapping-math
+)
